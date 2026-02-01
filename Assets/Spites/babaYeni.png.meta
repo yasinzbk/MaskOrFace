@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: 8eec5736ab5058a4baebec0d414c95d2
+guid: ed390205f916bd740ae583f0457dc69c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1891444344370828876
-    second: sihirbaz_0
+      213: 8182937747275287865
+    second: babaYeni_0
+  - first:
+      213: -6152195441805737382
+    second: babaYeni_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +40,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +49,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -75,7 +78,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,13 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: sihirbaz_0
+      name: babaYeni_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 4961
-        height: 5038
+        x: 2587
+        y: 6589
+        width: 12
+        height: 12
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +131,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c4615a22c92cf3a10800000000000000
-      internalID: 1891444344370828876
+      spriteID: 93d8a7da682af8170800000000000000
+      internalID: 8182937747275287865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: babaYeni_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 4952
+        height: 6509
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a52446667d20f9aa0800000000000000
+      internalID: -6152195441805737382
       vertices: []
       indices: 
       edges: []
@@ -138,7 +163,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -147,7 +172,9 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      babaYeni_0: 8182937747275287865
+      babaYeni_1: -6152195441805737382
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

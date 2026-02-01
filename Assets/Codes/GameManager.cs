@@ -1,18 +1,42 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
 
 public class GameManager : MonoBehaviour
 {
     [System.Serializable]
     public class Character
     {
-        public Sprite bodySprite;
-        public bool hasMask;              // Gercek durumu
+        // --- Kimlik ---
+        public string id;
+
+        // --- Görseller ---
+        public Sprite maskedBody;      // Mask takili tam vucut
+        public Sprite unmaskedBody;    // Maskesiz tam vucut
+
+        // --- Mantik ---
+        public bool hasMask;           // Bu karakter maskeli mi?
+
+        // --- Metinler ---
         [TextArea] public string dialogue;
         [TextArea] public string trueIntentText;
+
+        // --- Pozisyon Referanslari (CharacterCard LOCAL SPACE) ---
+
+        // El animasyonunun gidecegi yer
+        //public Vector2 headPosition;
+
+        // Face yanlis / Mask dogru disi hint durumu
+        //public Vector2 hintPosition;
+
+        public Vector2 headOffset;
+
+        public Vector2 hintOffset;
+        public Vector2 hintSize;
     }
 
     [Header("Characters")]
@@ -21,11 +45,13 @@ public class GameManager : MonoBehaviour
 
     [Header("UI References")]
     public Image bodyImage;
-    public Image maskImage;
+    //public Image maskImage;
     public Image handprintImage;
     public Image hintImage;
 
     public TMP_Text dialogueText;
+    public TMP_Text dialogueTextFinal;
+
 
     [Header("Counts")]
     private int correctCount = 0;
@@ -45,27 +71,144 @@ public class GameManager : MonoBehaviour
     public TMP_Text leftScoreText;
     public TMP_Text rightScoreText;
 
+    [Header("Main Character")]
     public Image resultImage;
-    public Sprite angelSprite;
-    public Sprite devilSprite;
+    public Image playerBodyImage;
+
+    public Sprite playerAngelSprite;
+    public Sprite playerDevilSprite;
+    public Sprite playerMaskedSprite;
+
+    public Transform playerPosition;
+    public Vector2 headOffsetPlayer;
+
+    [Header("Hand Animation")]
+    public RectTransform handImage;
+    public RectTransform handTargetPoint;
+
+    float endScaleValue = 2.8f;
+    float startScaleValue = 4.5f;
+
+    [Header("End Level Dialogue")]
+    [TextArea] public string angelEndDialogue;
+    [TextArea] public string devilEndDialogue;
+
+
+    [Header("Intro")]
+    public GameObject introPanel;
+    public Image introBodyImage;
+    [TextArea] public List<string> introDialogues;
+
+    public Button nextButton;
+    public Button skipButton;
+
+    private int introIndex = 0;
+    private bool inIntro = true;
 
 
     void Start()
     {
+        //ShowCharacter();
+
+        StartIntro();
+    }
+
+    void StartIntro()
+    {
+        inIntro = true;
+        inputLocked = true;
+
+        introPanel.SetActive(true);
+
+        introBodyImage.sprite = playerMaskedSprite;
+        introBodyImage.transform.localPosition = new Vector3(800, 0, 0);
+
+        introIndex = 0;
+
+        StartCoroutine(IntroSlideIn());
+    }
+
+    IEnumerator IntroSlideIn()
+    {
+        Vector3 start = introBodyImage.transform.localPosition;
+        Vector3 target = Vector3.zero;
+        float t = 0;
+
+        while (t < 1)
+        {
+            t += Time.deltaTime * 3f;
+            introBodyImage.transform.localPosition = Vector3.Lerp(start, target, t);
+            yield return null;
+        }
+
+        ShowIntroDialogue();
+    }
+
+
+    void ShowIntroDialogue()
+    {
+        dialogueText.text = introDialogues[introIndex];
+
+        // hafif öne gelme / pulse
+        introBodyImage.transform.DOKill();
+        introBodyImage.transform.localScale = Vector3.one;
+
+        introBodyImage.transform
+            .DOScale(1.05f, 0.2f)
+            .SetLoops(2, LoopType.Yoyo);
+    }
+
+    public void OnIntroNext()
+    {
+        if (!inIntro) return;
+
+        introIndex++;
+
+        if (introIndex >= introDialogues.Count)
+        {
+            EndIntro();
+        }
+        else
+        {
+            ShowIntroDialogue();
+        }
+    }
+
+    public void OnIntroSkip()
+    {
+        if (!inIntro) return;
+        EndIntro();
+    }
+
+    void EndIntro()
+    {
+        inIntro = false;
+
+        introPanel.SetActive(false);
+
+        inputLocked = false;
+
+        // ANA OYUN BAÞLASIN
+        currentIndex = 0;
         ShowCharacter();
     }
 
+
     void ShowCharacter()
     {
-        inputLocked = false;
+        //inputLocked = false;
 
         var c = characters[currentIndex];
 
-        bodyImage.sprite = c.bodySprite;
+
+        bodyImage.sprite = c.maskedBody;
+
+  
+
         dialogueText.text = c.dialogue;
 
-        maskImage.gameObject.SetActive(c.hasMask);
-        maskImage.transform.localScale = Vector3.one;
+        //maskImage.gameObject.SetActive(c.hasMask);
+        //maskImage.transform.localScale = Vector3.one;
 
         handprintImage.gameObject.SetActive(false);
         hintImage.gameObject.SetActive(false);
@@ -86,11 +229,30 @@ public class GameManager : MonoBehaviour
             bodyImage.transform.localPosition = Vector3.Lerp(start, target, t);
             yield return null;
         }
+
+        inputLocked = false;
+
     }
 
     public void OnMaskSelected()
     {
-        Debug.Log("Mask Selected"); 
+        Debug.Log("Mask Selected");
+
+        //if (inputLocked) return;
+        //inputLocked = true;
+
+        //var c = characters[currentIndex];
+
+        //if (c.hasMask)
+        //{
+        //    correctCount++;
+        //    StartCoroutine(ShowFeedback_MaskCorrect(c));
+        //}
+        //else
+        //{
+        //    wrongCount++;
+        //    StartCoroutine(ShowFeedback_MaskWrong());
+        //}
 
         if (inputLocked) return;
         inputLocked = true;
@@ -100,12 +262,12 @@ public class GameManager : MonoBehaviour
         if (c.hasMask)
         {
             correctCount++;
-            StartCoroutine(ShowFeedback_MaskCorrect(c));
+            StartCoroutine(HandleMaskTrue(c));
         }
         else
         {
             wrongCount++;
-            StartCoroutine(ShowFeedback_MaskWrong());
+            StartCoroutine(HandleMaskWrong_Face(c));
         }
 
     }
@@ -133,24 +295,133 @@ public class GameManager : MonoBehaviour
 
     }
 
-    IEnumerator ShowFeedback_MaskCorrect(Character c)
+    IEnumerator HandleMaskTrue(Character c)
     {
-        float t = 0;
-        Vector3 startScale = maskImage.transform.localScale;
+        // 1. El’i ekrana getir
+        handImage.gameObject.SetActive(true);
 
-        while (t < 1)
+        //Vector2 screenCenter = Vector2.zero;
+    //    Vector2 headPos =
+    //bodyImage.rectTransform.anchoredPosition + c.headOffset;
+
+        // Karakter local  canvas local
+        Vector2 headCanvasPos = handTargetPoint.position;
+
+        //yield return StartCoroutine(MoveHand(screenCenter, headCanvasPos));
+        yield return StartCoroutine(HandReachToHead(headCanvasPos));
+        yield return new WaitForSeconds(0.7f);
+
+        // 2. Kafada bekle
+        //yield return new WaitForSeconds(c.handPauseTime);
+
+        // 3. SPRITE SWAP (KRÝTÝK AN)
+        bodyImage.sprite = c.unmaskedBody;
+
+        //// 4. El geri ciksin
+        //yield return StartCoroutine(MoveHand(headCanvasPos, screenCenter));
+        yield return StartCoroutine(HandPullBack());
+
+        handImage.gameObject.SetActive(false);
+
+        //// 5. Devam
+        yield return new WaitForSeconds(1.6f);
+        NextCharacter();
+    }
+
+    IEnumerator HandReachToHead(Vector2 headCanvasPos)
+    {
+        handImage.gameObject.SetActive(true);
+
+        //float endScaleValue = 2.8f;
+        //float startScaleValue = 4.5f;
+        // Baslangic
+        handImage.position = new Vector2(300, -300);
+        handImage.localScale = Vector3.one * startScaleValue;
+
+        float duration = 1.2f;
+        float t = 0f;
+
+        while (t < 1f)
         {
-            t += Time.deltaTime * 3f;
-            maskImage.transform.localScale = Vector3.Lerp(startScale, Vector3.zero, t);
+            t += Time.deltaTime / duration;
+
+            // Pozisyon: sag alttan kafaya
+            handImage.position =
+                Vector2.Lerp(handImage.position, headCanvasPos, t);
+
+            // Scale: buyukten kucuge (perspektif)
+            handImage.localScale =
+                Vector3.Lerp(Vector3.one * startScaleValue, Vector3.one * endScaleValue, t);
+
             yield return null;
         }
 
-        maskImage.gameObject.SetActive(false);
-        dialogueText.text = c.trueIntentText;
+        // Netle
+        handImage.position = headCanvasPos;
+        handImage.localScale = Vector3.one * endScaleValue;
+    }
+
+    IEnumerator HandleMaskWrong_Face(Character c)
+    {
+        // El aktif
+        handImage.gameObject.SetActive(true);
+
+        Vector2 headCanvasPos = handTargetPoint.position+ (Vector3)c.headOffset;
+
+        // El kafaya gider
+        yield return StartCoroutine(HandReachToHead(headCanvasPos));
+
+        // Kýsa bekleme
+        yield return new WaitForSeconds(0.3f);
+
+        // SPRITE SWAP YOK 
+        // SADECE EL IZI
+        handprintImage.gameObject.SetActive(true);
+
+        // El izi kafada olsun
+        handprintImage.rectTransform.position =
+            bodyImage.rectTransform.position + (Vector3)c.headOffset;
+
+        dialogueText.text = "There was no mask, you fool...";
+
+        // El geri gider
+        yield return StartCoroutine(HandPullBack());
 
         yield return new WaitForSeconds(1.2f);
+
+        handprintImage.gameObject.SetActive(false);
+
         NextCharacter();
     }
+
+
+    IEnumerator HandPullBack()
+    {
+        Vector2 endPos = new Vector2(300, -300);
+        Vector3 endScale = Vector3.one * startScaleValue;
+
+        float duration = 0.1f;
+        float t = 0f;
+
+        Vector2 startPos = handImage.position;
+        Vector3 startScale = handImage.localScale;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+
+            handImage.position =
+                Vector2.Lerp(startPos, endPos, t);
+
+            handImage.localScale =
+                Vector3.Lerp(startScale, endScale, t);
+
+            yield return null;
+        }
+
+        handImage.gameObject.SetActive(false);
+    }
+
 
     IEnumerator ShowFeedback_MaskWrong()
     {
@@ -177,12 +448,45 @@ public class GameManager : MonoBehaviour
 
     IEnumerator ShowFeedback_FaceWrong()
     {
-        hintImage.gameObject.SetActive(true);
-        dialogueText.text = "Gozunden kacirilan bir sey vardi...";
+        //hintImage.gameObject.SetActive(true);
+        //dialogueText.text = "Gozunden kacirilan bir sey vardi...";
 
-        bodyImage.transform.localScale = Vector3.one * 1.1f;
-        yield return new WaitForSeconds(1f);
-        bodyImage.transform.localScale = Vector3.one;
+        //bodyImage.transform.localScale = Vector3.one * 1.1f;
+        //yield return new WaitForSeconds(1f);
+        //bodyImage.transform.localScale = Vector3.one;
+
+        //NextCharacter();
+
+        hintImage.transform.DOKill();
+
+        var c = characters[currentIndex];
+
+        dialogueText.text = "You missed something...";
+
+        // Pozisyon ve boyut
+        hintImage.rectTransform.position =
+            bodyImage.rectTransform.position + (Vector3)c.hintOffset;
+
+        hintImage.rectTransform.sizeDelta = c.hintSize;
+
+        hintImage.gameObject.SetActive(true);
+        hintImage.transform.localScale = Vector3.one;
+
+        // DOTWEEN PULSE (tekrar eden)
+        Tween pulseTween = hintImage.transform
+            .DOScale(1.15f, 0.45f)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(-1, LoopType.Yoyo);
+
+        // Daha uzun bekleme
+        yield return new WaitForSeconds(2.5f);
+
+        // Temizle
+        pulseTween.Kill();
+        hintImage.transform.localScale = Vector3.one;
+        hintImage.gameObject.SetActive(false);
+
+        yield return new WaitForSeconds(0.5f);
 
         NextCharacter();
     }
@@ -213,14 +517,83 @@ public class GameManager : MonoBehaviour
 
         inputLocked = true;
 
-        angelDevilPanel.SetActive(true);
 
         leftScoreText.text = correctCount.ToString();
         rightScoreText.text = wrongCount.ToString();
 
-        StartCoroutine(AnimateScoreBar());
-        // Burada bolum sonu UI'ye gecersin
+        //angelDevilPanel.SetActive(true);
+        //StartCoroutine(AnimateScoreBar());
+        //// Burada bolum sonu UI'ye gecersin
+        ///
+        angelDevilPanel.SetActive(true);
+
+        // Oyuncu BASLANGICTA MASKELI
+        playerBodyImage.sprite = playerMaskedSprite;
+
+        StartCoroutine(EndLevelSequence());
     }
+
+    IEnumerator EndLevelSequence()
+    {
+        // 1. Player saðdan gelsin
+        yield return StartCoroutine(SlideInEndPlayer());
+
+        // 2. Skor oynasýn
+        yield return StartCoroutine(AnimateScoreBar());
+
+        // Kisa dramatik bekleme
+        yield return new WaitForSeconds(0.6f);
+
+        // 4. Maske açýlma (ayný el sistemi)
+        yield return StartCoroutine(EndLevelMaskReveal());
+
+        // Burada istersen continue / restart butonu acarsin
+    }
+
+    IEnumerator SlideInEndPlayer()
+    {
+        Vector3 start = playerBodyImage.transform.localPosition;
+        Vector3 target = playerBodyImage.transform.localPosition + playerPosition.localPosition;
+        float t = 0;
+
+        while (t < 1)
+        {
+            t += Time.deltaTime * 3f;
+            playerBodyImage.transform.localPosition = Vector3.Lerp(start, target, t);
+            yield return null;
+        }
+    }
+
+
+    IEnumerator EndLevelMaskReveal()
+    {
+        Vector2 headPos = handTargetPoint.position + (Vector3)headOffsetPlayer;
+
+        // El gelir
+        yield return StartCoroutine(HandReachToHead(headPos));
+
+        yield return new WaitForSeconds(0.5f);
+
+        bool isAngel = correctCount > wrongCount;
+
+        // MASK DUSUYOR
+        if (isAngel)
+            playerBodyImage.sprite = playerAngelSprite;
+        else
+            playerBodyImage.sprite = playerDevilSprite;
+
+        // El geri gider
+        yield return StartCoroutine(HandPullBack());
+
+        // END LEVEL KONUÞMA
+        yield return new WaitForSeconds(0.4f);
+
+        dialogueTextFinal.text = isAngel ? angelEndDialogue : devilEndDialogue;
+
+        dialogueText.alpha = 0;
+        dialogueText.DOFade(1f, 0.5f);
+    }
+
 
     IEnumerator AnimateScoreBar()
     {
@@ -257,13 +630,46 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        // RESULT
-        if (correct > wrong)
-            resultImage.sprite = angelSprite;
-        else
-            resultImage.sprite = devilSprite;
+        //int correct = correctCount;
+        //int wrong = wrongCount;
+        //int total = Mathf.Max(1, correct + wrong);
 
-        resultImage.gameObject.SetActive(true);
+        //float balance = (float)(correct - wrong) / total; // -1 .. +1
+
+        //float barWidth = scoreBarRoot.rect.width;
+        //float targetX = balance * (barWidth / 2f);
+
+        //float duration = 0.7f;
+        //float t = 0f;
+
+        //Vector2 startPos = indicator.anchoredPosition;
+        //Vector2 targetPos = new Vector2(targetX, startPos.y);
+
+        //while (t < 1f)
+        //{
+        //    t += Time.deltaTime / duration;
+
+        //    float x = Mathf.Lerp(startPos.x, targetPos.x, t);
+        //    indicator.anchoredPosition = new Vector2(x, startPos.y);
+
+        //    float halfWidth = barWidth / 2f;
+
+        //    float greenWidth = Mathf.Clamp(halfWidth + x, 0, barWidth);
+        //    float redWidth = Mathf.Clamp(halfWidth - x, 0, barWidth);
+
+        //    greenFill.sizeDelta = new Vector2(greenWidth, greenFill.sizeDelta.y);
+        //    redFill.sizeDelta = new Vector2(redWidth, redFill.sizeDelta.y);
+
+        //    yield return null;
+        //}
+
+        //// RESULT
+        //if (correct > wrong)
+        //    resultImage.sprite = playerAngelSprite;
+        //else
+        //    resultImage.sprite = playerDevilSprite;
+
+        //resultImage.gameObject.SetActive(true);
     }
 
 }
